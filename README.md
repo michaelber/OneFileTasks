@@ -14,6 +14,10 @@ A local-first, single-file task manager built with React and Tauri. Organize you
 - **Single-File Distribution** - Build as a standalone HTML file for easy sharing
 - **Cross-Platform Desktop** - Package as native Tauri app for Windows, macOS, and Linux
 
+## Demo
+
+- Standalone HTML file Demo: [dist/index.html](dist/index.html)
+
 ## Development
 
 **Prerequisites:** Node.js 18+, Rust 1.80+ (required only for Tauri desktop builds)
