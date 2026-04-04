@@ -44,7 +44,6 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   accentColor: string;
   defaultView: 'next-actions' | 'projects' | 'contexts' | 'all';
-  autoSaveInterval: number; // in minutes
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -55,7 +54,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'auto',
   accentColor: 'emerald',
   defaultView: 'all',
-  autoSaveInterval: 1,
 };
 
 export interface Task {
@@ -123,7 +121,14 @@ function useFileSystemSync() {
       if (handle) {
         setFileHandle(handle);
         try {
-          const permission = await (handle as any).queryPermission({ mode: 'readwrite' });
+          let permission = await (handle as any).queryPermission({ mode: 'readwrite' });
+          if (permission !== 'granted') {
+            try {
+              permission = await (handle as any).requestPermission({ mode: 'readwrite' });
+            } catch (e) {
+              console.log('Auto request permission failed', e);
+            }
+          }
           if (permission === 'granted') {
             await loadFromFile(handle);
           } else {
@@ -267,6 +272,44 @@ function useFileSystemSync() {
     setSyncStatus('idle');
     await set('savedFileHandle', null);
   };
+
+  // Tauri auto-save on close
+  useEffect(() => {
+    if ('__TAURI_INTERNALS__' in window) {
+      let unlisten: (() => void) | undefined;
+      
+      const setup = async () => {
+        try {
+          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+          const appWindow = getCurrentWindow();
+          unlisten = await appWindow.onCloseRequested(async (event) => {
+            if (fileHandle) {
+              // Prevent immediate close to allow saving
+              event.preventDefault();
+              try {
+                const writable = await fileHandle.createWritable();
+                const allTasks = await db.tasks.toArray();
+                await writable.write(JSON.stringify(allTasks, null, 2));
+                await writable.close();
+              } catch (e) {
+                console.error("Failed to save on close", e);
+              }
+              // Close the window after saving
+              appWindow.destroy();
+            }
+          });
+        } catch (e) {
+          console.error("Failed to setup Tauri close handler", e);
+        }
+      };
+      
+      setup();
+      
+      return () => {
+        if (unlisten) unlisten();
+      };
+    }
+  }, [fileHandle]);
 
   return { fileHandle, syncStatus, lastSynced, linkFile, createNewFile, syncToFile, manualExport, manualImport, requestPermissionAndSync, unlinkFile };
 }
@@ -1380,28 +1423,6 @@ const SettingsModal = ({
             </div>
           </section>
 
-          {/* Data & Sync */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-accent-600 dark:text-accent-400 uppercase tracking-wider">Data & Sync</h3>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Auto-save interval</div>
-                <div className="text-sm text-zinc-500">How often changes sync to file (if linked)</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  min="1"
-                  value={settings.autoSaveInterval}
-                  onChange={e => setSettings(s => ({ ...s, autoSaveInterval: Math.max(1, parseInt(e.target.value) || 5) }))}
-                  className="w-20 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md px-3 py-1.5 text-sm"
-                />
-                <span className="text-sm text-zinc-500">minutes</span>
-              </div>
-            </div>
-          </section>
-
           {/* Advanced Options */}
           <section className="space-y-4">
             <h3 className="text-sm font-semibold text-accent-600 dark:text-accent-400 uppercase tracking-wider">Advanced Options</h3>
@@ -1471,6 +1492,9 @@ export default function App() {
     localStorage.setItem('expandedIds', JSON.stringify(Array.from(expandedIds)));
   }, [expandedIds]);
 
+  const { fileHandle, syncStatus, linkFile, createNewFile, syncToFile, manualExport, manualImport, requestPermissionAndSync, unlinkFile } = useFileSystemSync();
+  const supportsFileSystemAccess = 'showOpenFilePicker' in window;
+
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [newTaskBeingEdited, setNewTaskBeingEdited] = useState<string | null>(null);
   const [detailsWidth, setDetailsWidth] = useState(384);
@@ -1523,6 +1547,7 @@ export default function App() {
     redoStackRef.current = [];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
+    if (fileHandle) syncToFile();
   };
 
   const undo = async () => {
@@ -1557,6 +1582,7 @@ export default function App() {
     redoStackRef.current = [...redoStackRef.current, action];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
+    if (fileHandle) syncToFile();
   };
 
   const redo = async () => {
@@ -1591,6 +1617,7 @@ export default function App() {
     undoStackRef.current = [...undoStackRef.current, action];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
+    if (fileHandle) syncToFile();
   };
 
   useEffect(() => {
@@ -1627,9 +1654,6 @@ export default function App() {
     document.addEventListener('touchstart', handleTouch);
     return () => document.removeEventListener('touchstart', handleTouch);
   }, []);
-
-  const { fileHandle, syncStatus, linkFile, createNewFile, syncToFile, manualExport, manualImport, requestPermissionAndSync, unlinkFile } = useFileSystemSync();
-  const supportsFileSystemAccess = 'showOpenFilePicker' in window;
 
   // Auto-sync effect
   useEffect(() => {
