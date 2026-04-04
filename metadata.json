@@ -1,0 +1,5 @@
+{
+  "name": "OneFileTasks",
+  "description": "A modern, local-first task and project management tool. Features a hierarchical task tree, smart lists, and local file system sync.",
+  "requestFramePermissions": []
+}
