@@ -16,7 +16,7 @@ A local-first, single-file task manager built with React and Tauri. Organize you
 
 ## Demo
 
-- Standalone HTML file Demo: [dist/index.html](dist/index.html)
+- Standalone HTML file Demo: https://raw.githubusercontent.com/michaelber/OneFileTasks/refs/heads/main/dist/index.html (download and run locally)
 
 ## Development
 
