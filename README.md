@@ -21,6 +21,10 @@ A local-first, single-file task manager built with React and Tauri. Organize you
 
 ![OneFileTasks demo screenshot](demo/screenshot.png)
 
+## Release
+
+- Download latest release: https://github.com/michaelber/OneFileTasks/releases
+
 ## Development
 
 **Prerequisites:** Node.js 18+, Rust 1.80+ (required only for Tauri desktop builds)
