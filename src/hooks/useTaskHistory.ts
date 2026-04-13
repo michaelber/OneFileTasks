@@ -9,7 +9,7 @@ export type HistoryAction =
   | { type: 'BULK_UPDATE', updates: { oldTask: Task, newTask: Task }[], timestamp: number }
   | { type: 'COMPOSITE', actions: HistoryAction[], timestamp: number };
 
-export function useTaskHistory(syncToFile: () => void, fileHandle: FileSystemFileHandle | null) {
+export function useTaskHistory() {
   const undoStackRef = useRef<HistoryAction[]>([]);
   const redoStackRef = useRef<HistoryAction[]>([]);
   const [canUndo, setCanUndo] = useState(false);
@@ -37,7 +37,6 @@ export function useTaskHistory(syncToFile: () => void, fileHandle: FileSystemFil
     redoStackRef.current = [];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
-    if (fileHandle) syncToFile();
   };
 
   const undo = async () => {
@@ -72,7 +71,6 @@ export function useTaskHistory(syncToFile: () => void, fileHandle: FileSystemFil
     redoStackRef.current = [...redoStackRef.current, action];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
-    if (fileHandle) syncToFile();
   };
 
   const redo = async () => {
@@ -107,7 +105,6 @@ export function useTaskHistory(syncToFile: () => void, fileHandle: FileSystemFil
     undoStackRef.current = [...undoStackRef.current, action];
     setCanUndo(undoStackRef.current.length > 0);
     setCanRedo(redoStackRef.current.length > 0);
-    if (fileHandle) syncToFile();
   };
 
   const removeLastUndoAction = () => {

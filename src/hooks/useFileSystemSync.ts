@@ -111,8 +111,8 @@ export function useFileSystemSync() {
     }
   };
 
-  const syncToFile = async (handle: FileSystemFileHandle | null = fileHandle) => {
-    if (!handle) return;
+  const syncToFile = async (handle: FileSystemFileHandle | null = fileHandle): Promise<boolean> => {
+    if (!handle) return false;
     setSyncStatus('syncing');
     try {
       const writable = await handle.createWritable();
@@ -121,9 +121,11 @@ export function useFileSystemSync() {
       await writable.close();
       setSyncStatus('synced');
       setLastSynced(Date.now());
+      return true;
     } catch (err) {
       console.error('Error syncing to file:', err);
       setSyncStatus('error');
+      return false;
     }
   };
 

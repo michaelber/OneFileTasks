@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, X } from 'lucide-react';
+import { HelpCircle, X, ChevronRight, ChevronDown, Folder, Briefcase } from 'lucide-react';
 import { Task } from '../../types';
 import { generateId } from '../../lib/utils';
 
@@ -17,9 +17,61 @@ export const QuickAddModal = ({
   const [parentSearch, setParentSearch] = useState('');
   const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [expandedDropdownIds, setExpandedDropdownIds] = useState<Set<string>>(new Set());
 
-  const parentOptions = allTasks.filter(t => t.isFolder || t.isProject);
+  const parentOptions = allTasks;
   const filteredParents = parentOptions.filter(p => p.title.toLowerCase().includes(parentSearch.toLowerCase()));
+
+  const rootNodes = allTasks
+    .filter(t => t.parentId === null)
+    .sort((a, b) => a.order - b.order);
+
+  const renderTreeNode = (node: Task, depth: number) => {
+    const children = allTasks
+      .filter(t => t.parentId === node.id)
+      .sort((a, b) => a.order - b.order);
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedDropdownIds.has(node.id);
+
+    return (
+      <React.Fragment key={node.id}>
+        <div 
+          className="flex items-center px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+          style={{ paddingLeft: `${depth * 1.25 + 0.75}rem` }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setParentId(node.id);
+            setParentSearch(node.title);
+            setIsParentDropdownOpen(false);
+          }}
+        >
+          <div 
+            className="w-5 h-5 flex items-center justify-center shrink-0 mr-1"
+            onMouseDown={(e) => {
+              if (hasChildren) {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandedDropdownIds(prev => {
+                  const next = new Set(prev);
+                  if (next.has(node.id)) next.delete(node.id);
+                  else next.add(node.id);
+                  return next;
+                });
+              }
+            }}
+          >
+            {hasChildren ? (
+              isExpanded ? <ChevronDown size={14} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" /> : <ChevronRight size={14} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300" />
+            ) : null}
+          </div>
+          {node.isFolder && <Folder size={14} className="mr-1.5 text-yellow-500 dark:text-yellow-400 shrink-0" />}
+          {node.isProject && <Briefcase size={14} className="mr-1.5 text-blue-500 dark:text-blue-400 shrink-0" />}
+          <span className="truncate">{node.title}</span>
+        </div>
+        {hasChildren && isExpanded && children.map(child => renderTreeNode(child, depth + 1))}
+      </React.Fragment>
+    );
+  };
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -146,7 +198,7 @@ export const QuickAddModal = ({
           
           <div className="relative">
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Add to Project/Folder
+              Add to
             </label>
             <input
               type="text"
@@ -162,9 +214,9 @@ export const QuickAddModal = ({
               className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent-500"
             />
             {isParentDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg max-h-64 overflow-y-auto py-1">
                 <div 
-                  className="px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-zinc-500"
+                  className="px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer text-zinc-500 flex items-center"
                   onMouseDown={(e) => {
                     e.preventDefault();
                     setParentId(null);
@@ -172,22 +224,31 @@ export const QuickAddModal = ({
                     setIsParentDropdownOpen(false);
                   }}
                 >
+                  <div className="w-5 h-5 mr-1 shrink-0"></div>
                   (Root)
                 </div>
-                {filteredParents.map(p => (
-                  <div 
-                    key={p.id}
-                    className="px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setParentId(p.id);
-                      setParentSearch(p.title);
-                      setIsParentDropdownOpen(false);
-                    }}
-                  >
-                    {p.title}
-                  </div>
-                ))}
+                
+                {parentSearch.trim() ? (
+                  filteredParents.map(p => (
+                    <div 
+                      key={p.id}
+                      className="px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setParentId(p.id);
+                        setParentSearch(p.title);
+                        setIsParentDropdownOpen(false);
+                      }}
+                    >
+                      <div className="w-5 h-5 mr-1 shrink-0"></div>
+                      {p.isFolder && <Folder size={14} className="mr-1.5 text-yellow-500 dark:text-yellow-400 shrink-0" />}
+                      {p.isProject && <Briefcase size={14} className="mr-1.5 text-blue-500 dark:text-blue-400 shrink-0" />}
+                      <span className="truncate">{p.title}</span>
+                    </div>
+                  ))
+                ) : (
+                  rootNodes.map(node => renderTreeNode(node, 0))
+                )}
               </div>
             )}
           </div>

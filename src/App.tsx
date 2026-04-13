@@ -104,7 +104,7 @@ export default function App() {
     return localStorage.getItem('hideDeleteWarning') === 'true';
   });
 
-  const { undoStackRef, canUndo, canRedo, pushHistory, undo, redo, removeLastUndoAction } = useTaskHistory(syncToFile, fileHandle);
+  const { undoStackRef, canUndo, canRedo, pushHistory, undo, redo, removeLastUndoAction } = useTaskHistory();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -142,14 +142,31 @@ export default function App() {
   }, []);
 
   // Auto-sync effect
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   useEffect(() => {
     if (fileHandle && allTasks.length > 0 && syncStatus !== 'needs_permission') {
-      const timeout = setTimeout(() => {
-        syncToFile();
-      }, settings.autoSaveInterval * 60 * 1000); // Debounce sync based on settings
+      setHasUnsavedChanges(true);
+      const timeout = setTimeout(async () => {
+        const success = await syncToFile();
+        if (success) {
+          setHasUnsavedChanges(false);
+        }
+      }, 2000); // Debounce sync by 2 seconds
       return () => clearTimeout(timeout);
     }
-  }, [allTasks, fileHandle, syncStatus, settings.autoSaveInterval]);
+  }, [allTasks, fileHandle, syncStatus]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const {
     fullTree,

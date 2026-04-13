@@ -61,6 +61,10 @@ export const HelpModal = ({ onClose }: { onClose: () => void }) => {
             </p>
           </section>
         </div>
+        
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 text-center text-xs text-zinc-500">
+          Version {import.meta.env.VITE_APP_VERSION || '1.0.0'}
+        </div>
       </div>
     </div>
   );

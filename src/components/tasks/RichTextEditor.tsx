@@ -175,6 +175,17 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        document.execCommand('outdent', false, undefined);
+      } else {
+        document.execCommand('indent', false, undefined);
+      }
+      handleInput();
+      return;
+    }
+
     if (e.key === 'Enter' || e.key === ' ') {
       const selection = window.getSelection();
       if (!selection || selection.rangeCount === 0) return;
