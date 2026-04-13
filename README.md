@@ -60,3 +60,44 @@ Output: Executable bundles in `src-tauri/target/release/bundle/`
 ```
 npm run tauri icon ./src-tauri/icons/icon.svg
 ```
+
+#### Android Application (Tauri)
+To build the Android APK locally, ensure you have [Rust](https://rustup.rs/) and [Android Studio / Android SDK](https://developer.android.com/studio) installed, then follow these steps:
+
+### Android Development
+
+1. **Run with Live Reload:** To test on a connected device or emulator with HMR:
+   ```bash
+   npm run android:dev
+   ```
+2. **Open in Android Studio:** To use Android Studio's native tools (Debugger, Profiler):
+   ```bash
+   npm run android:open
+   ```
+
+### Android Production Build
+
+1. **Install Dependencies:** Open a terminal in the project folder and run:
+   ```bash
+   npm install
+   ```
+2. **Initialize Android Project:** Run the following command to generate the Android project files (this creates the `src-tauri/gen/android` folder):
+   ```bash
+   npx tauri android init
+   ```
+3. **Configure Keystore (Optional for Release):** To automatically sign the app during the build process, fill in your keystore details in the `.env` file:
+   ```env
+   TAURI_ANDROID_KEYSTORE_PATH=./my-release-key.jks
+   TAURI_ANDROID_KEYSTORE_PASSWORD=your_password
+   TAURI_ANDROID_KEY_ALIAS=your_alias
+   TAURI_ANDROID_KEY_PASSWORD=your_key_password
+   ```
+4. **Build the APK:** Run the build command:
+   If using the `.env` file, ensure the variables are exported to your shell. Using `npx dotenv-cli` ensures the environment variables are loaded into the build process:
+   ```bash
+   # Run the build with env variables loaded
+   npm run android:release
+   ```
+
+Once the build completes, your signed App Bundle (.aab) for Google Play will be located at:
+`src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab`

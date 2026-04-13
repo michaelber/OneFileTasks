@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "android:release": "npx dotenv-cli -f .env -- npx tauri android build",
+    "android:dev": "tauri android dev",
+    "android:open": "tauri android open"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",

@@ -106,8 +106,20 @@ export default function App() {
 
   const { undoStackRef, canUndo, canRedo, pushHistory, undo, redo, removeLastUndoAction } = useTaskHistory();
 
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (fileHandle) {
+          syncToFile().then((success) => {
+            if (success) setHasUnsavedChanges(false);
+          });
+        }
+        return;
+      }
+
       const activeTag = document.activeElement?.tagName.toLowerCase();
       const isInput = activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
       if (isInput) return; // Let native undo handle it
@@ -127,7 +139,7 @@ export default function App() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [fileHandle, syncToFile]);
 
   useEffect(() => {
     const handleTouch = (e: TouchEvent) => {
@@ -142,8 +154,6 @@ export default function App() {
   }, []);
 
   // Auto-sync effect
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
   useEffect(() => {
     if (fileHandle && allTasks.length > 0 && syncStatus !== 'needs_permission') {
       setHasUnsavedChanges(true);
