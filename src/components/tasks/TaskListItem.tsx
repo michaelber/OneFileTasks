@@ -10,6 +10,7 @@ import { cn } from '../../lib/utils';
 import { db } from '../../lib/db';
 
 interface TaskListItemProps {
+  key?: React.Key;
   node: TaskNode;
   depth?: number;
   allTasks: Task[];

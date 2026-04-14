@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "android:release": "npx dotenv-cli -f .env -- npx tauri android build",
     "android:dev": "tauri android dev",
-    "android:open": "tauri android open"
+    "android:standalone": "npm run build && tauri android build --debug",
+    "android:open": "tauri android studio"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",

@@ -70,7 +70,14 @@ To build the Android APK locally, ensure you have [Rust](https://rustup.rs/) and
    ```bash
    npm run android:dev
    ```
-2. **Open in Android Studio:** To use Android Studio's native tools (Debugger, Profiler):
+2. **Build Standalone APK (No Dev Server):** Create a self-contained APK that works independently on your device:
+   ```bash
+   npm run android:standalone
+   ```
+   The standalone APK will be generated at:
+   `src-tauri/gen/android/app/build/outputs/apk/debug/app-debug.apk`
+
+3. **Open in Android Studio:** To use native tools or to manually deploy and debug on your device:
    ```bash
    npm run android:open
    ```

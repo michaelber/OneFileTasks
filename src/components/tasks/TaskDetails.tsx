@@ -31,10 +31,37 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
   setRecurrenceModalOpen,
   settings
 }) => {
+  const touchStartXRef = React.useRef<number | null>(null);
+  const touchCurrentXRef = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchCurrentXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchCurrentXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current !== null && touchCurrentXRef.current !== null) {
+      const diff = touchCurrentXRef.current - touchStartXRef.current;
+      // If swiped right by more than 100px, close it
+      if (diff > 100) {
+        setSelectedTaskId(null);
+      }
+    }
+    touchStartXRef.current = null;
+    touchCurrentXRef.current = null;
+  };
+
   return (
     <div 
-      className="border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 md:dark:bg-zinc-900/30 flex flex-col shrink-0 fixed inset-0 z-50 md:relative md:inset-auto md:z-auto w-full md:w-[var(--details-width)]"
+      className="border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 md:dark:bg-zinc-900/30 flex flex-col shrink-0 fixed top-[env(safe-area-inset-top)] bottom-[env(safe-area-inset-bottom)] left-[env(safe-area-inset-left)] right-[env(safe-area-inset-right)] z-50 md:relative md:top-auto md:bottom-auto md:left-auto md:right-auto md:z-auto w-full md:w-[var(--details-width)]"
       style={{ '--details-width': `${detailsWidth}px` } as React.CSSProperties}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Drag Handle */}
       <div 

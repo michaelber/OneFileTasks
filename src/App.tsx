@@ -165,7 +165,7 @@ export default function App() {
       }, 2000); // Debounce sync by 2 seconds
       return () => clearTimeout(timeout);
     }
-  }, [allTasks, fileHandle, syncStatus]);
+  }, [allTasks, fileHandle]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -280,7 +280,15 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden">
+    <div 
+      className="flex h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)'
+      }}
+    >
       
       <Sidebar
         settings={settings}
