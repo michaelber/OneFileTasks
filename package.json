@@ -12,11 +12,11 @@
     "tauri": "tauri",
     "android:release": "npx dotenv-cli -f .env -- npx tauri android build",
     "android:dev": "tauri android dev",
-    "android:standalone": "npm run build && tauri android build --debug",
-    "android:open": "tauri android studio"
+    "android:open": "tauri android open"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dexie": "^4.4.1",

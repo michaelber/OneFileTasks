@@ -279,13 +279,24 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
         onMouseUp={checkSelection}
         onFocus={checkSelection}
         className="flex-1 p-3 bg-transparent focus:outline-none overflow-y-auto text-sm [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_b]:font-bold [&_i]:italic [&_u]:underline [&_a]:text-accent-600 [&_a]:hover:underline [&_a]:cursor-pointer"
-        onClick={(e) => {
+        onClick={async (e) => {
           const target = e.target as HTMLElement;
           const anchor = target.closest('a');
           if (anchor) {
+            e.preventDefault();
             const href = anchor.getAttribute('href');
             if (href) {
-              window.open(href, '_blank', 'noopener,noreferrer');
+              if ('__TAURI_INTERNALS__' in window) {
+                try {
+                  const { open } = await import('@tauri-apps/plugin-shell');
+                  await open(href);
+                } catch (err) {
+                  console.error('Failed to open link in Tauri:', err);
+                  window.open(href, '_blank', 'noopener,noreferrer');
+                }
+              } else {
+                window.open(href, '_blank', 'noopener,noreferrer');
+              }
             }
           }
         }}

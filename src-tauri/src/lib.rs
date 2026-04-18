@@ -1,8 +1,10 @@
+use tauri::Manager;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .setup(|_app| {
-            // Your setup logic here
+        .plugin(tauri_plugin_shell::init())
+        .setup(|app| {
             Ok(())
         })
         .run(tauri::generate_context!())

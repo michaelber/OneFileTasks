@@ -33,6 +33,17 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
 }) => {
   const touchStartXRef = React.useRef<number | null>(null);
   const touchCurrentXRef = React.useRef<number | null>(null);
+  const startDateRef = React.useRef<HTMLInputElement>(null);
+  const dueDateRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (startDateRef.current && document.activeElement !== startDateRef.current) {
+      startDateRef.current.value = selectedTask.startDate ? format(selectedTask.startDate, 'yyyy-MM-dd') : '';
+    }
+    if (dueDateRef.current && document.activeElement !== dueDateRef.current) {
+      dueDateRef.current.value = selectedTask.dueDate ? format(selectedTask.dueDate, 'yyyy-MM-dd') : '';
+    }
+  }, [selectedTask.id, selectedTask.startDate, selectedTask.dueDate]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;
@@ -142,11 +153,24 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
                     <Play size={16} className="text-zinc-400" />
                     <span className="w-10 text-zinc-500">Start</span>
                     <input 
+                      ref={startDateRef}
                       type="date"
-                      value={selectedTask.startDate ? format(selectedTask.startDate, 'yyyy-MM-dd') : ''}
                       onChange={(e) => {
-                        const date = e.target.value ? new Date(e.target.value).getTime() : null;
-                        updateTask(selectedTask.id, { startDate: date });
+                        // For date pickers, we still want immediate feedback if a full valid date is picked
+                        const val = e.target.value;
+                        if (val && val.length === 10) {
+                          const date = new Date(val).getTime();
+                          if (date !== selectedTask.startDate) {
+                            updateTask(selectedTask.id, { startDate: date });
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        const date = val ? new Date(val).getTime() : null;
+                        if (date !== selectedTask.startDate) {
+                          updateTask(selectedTask.id, { startDate: date });
+                        }
                       }}
                       className="bg-transparent border-b border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 focus:outline-none text-zinc-600 dark:text-zinc-300 pb-1 flex-1"
                     />
@@ -176,11 +200,23 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
                     <Clock size={16} className="text-zinc-400" />
                     <span className="w-10 text-zinc-500">Due</span>
                     <input 
+                      ref={dueDateRef}
                       type="date"
-                      value={selectedTask.dueDate ? format(selectedTask.dueDate, 'yyyy-MM-dd') : ''}
                       onChange={(e) => {
-                        const date = e.target.value ? new Date(e.target.value).getTime() : null;
-                        updateTask(selectedTask.id, { dueDate: date });
+                        const val = e.target.value;
+                        if (val && val.length === 10) {
+                          const date = new Date(val).getTime();
+                          if (date !== selectedTask.dueDate) {
+                            updateTask(selectedTask.id, { dueDate: date });
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        const date = val ? new Date(val).getTime() : null;
+                        if (date !== selectedTask.dueDate) {
+                          updateTask(selectedTask.id, { dueDate: date });
+                        }
                       }}
                       className="bg-transparent border-b border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 focus:outline-none text-zinc-600 dark:text-zinc-300 pb-1 flex-1"
                     />
