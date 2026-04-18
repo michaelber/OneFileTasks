@@ -95,7 +95,7 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
       return;
     }
 
-    const html = `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-accent-600 hover:underline">${savedSelectionText || linkUrl}</a>`;
+    const html = `<a href="${href}" rel="noopener noreferrer" class="text-accent-600 hover:underline">${savedSelectionText || linkUrl}</a>`;
     
     const selection = window.getSelection();
     if (savedRange && selection) {
@@ -155,7 +155,7 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
     const linkify = (text: string) => {
       return text.replace(urlRegex, (match) => {
         const href = match.startsWith('http') ? match : `https://${match}`;
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-accent-600 hover:underline">${match}</a>`;
+        return `<a href="${href}" rel="noopener noreferrer" class="text-accent-600 hover:underline">${match}</a>`;
       });
     };
 
@@ -212,7 +212,6 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
           const a = document.createElement('a');
           a.href = url;
           a.textContent = url;
-          a.target = "_blank";
           a.rel = "noopener noreferrer";
           a.className = "text-accent-600 hover:underline";
           
@@ -284,6 +283,7 @@ export const RichTextEditor = ({ value, onChange, taskId }: { value: string, onC
           const anchor = target.closest('a');
           if (anchor) {
             e.preventDefault();
+            e.stopPropagation();
             const href = anchor.getAttribute('href');
             if (href) {
               if ('__TAURI_INTERNALS__' in window) {

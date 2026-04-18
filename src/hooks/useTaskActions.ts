@@ -113,13 +113,22 @@ export function useTaskActions({
     }
 
     if (finalStartDate !== null && finalDueDate !== null && finalStartDate > finalDueDate) {
-      finalDueDate = finalStartDate;
+      if (updates.startDate !== undefined && updates.dueDate === undefined) {
+        // Start date was moved forward alone, push due date forward
+        finalDueDate = finalStartDate;
+      } else if (updates.dueDate !== undefined && updates.startDate === undefined) {
+        // Due date was moved backward alone, push start date backward
+        finalStartDate = finalDueDate;
+      } else {
+        // Both updated or other case, default to start date taking precedence
+        finalDueDate = finalStartDate;
+      }
     }
 
     const finalUpdates = {
       ...updates,
-      ...(finalStartDate !== oldTask.startDate ? { startDate: finalStartDate } : {}),
-      ...(finalDueDate !== oldTask.dueDate ? { dueDate: finalDueDate } : {})
+      startDate: finalStartDate,
+      dueDate: finalDueDate
     };
 
     const newTask = { ...oldTask, ...finalUpdates, updatedAt: Date.now() };
