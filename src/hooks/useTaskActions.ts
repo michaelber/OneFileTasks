@@ -132,8 +132,54 @@ export function useTaskActions({
     };
 
     const newTask = { ...oldTask, ...finalUpdates, updatedAt: Date.now() };
-    await db.tasks.update(id, newTask);
-    pushHistory({ type: 'UPDATE', id, oldTask, newTask, timestamp: Date.now() });
+    
+    const compositeActions: HistoryAction[] = [];
+    const isDateUpdate = updates.startDate !== undefined || updates.dueDate !== undefined;
+
+    await db.transaction('rw', db.tasks, async () => {
+      await db.tasks.update(id, { ...finalUpdates, updatedAt: Date.now() });
+      compositeActions.push({ type: 'UPDATE', id, oldTask, newTask, timestamp: Date.now() });
+      
+      if (isDateUpdate) {
+        const propagate = async (parentId: string, pStart: number | null, pDue: number | null) => {
+          const children = allTasks.filter(t => t.parentId === parentId);
+          for (const child of children) {
+            let childUpdates: Partial<Task> = {};
+            let needsUpdate = false;
+            
+            if (pStart !== null && child.startDate === null) {
+              childUpdates.startDate = pStart;
+              needsUpdate = true;
+            }
+            if (pDue !== null && child.dueDate === null) {
+              childUpdates.dueDate = pDue;
+              needsUpdate = true;
+            }
+            
+            if (needsUpdate) {
+              const updatedChild = { 
+                ...child, 
+                startDate: childUpdates.startDate !== undefined ? childUpdates.startDate : child.startDate,
+                dueDate: childUpdates.dueDate !== undefined ? childUpdates.dueDate : child.dueDate,
+                updatedAt: Date.now() 
+              };
+              await db.tasks.update(child.id, updatedChild);
+              compositeActions.push({ type: 'UPDATE', id: child.id, oldTask: child, newTask: updatedChild, timestamp: Date.now() });
+              
+              await propagate(child.id, updatedChild.startDate, updatedChild.dueDate);
+            }
+          }
+        };
+        
+        await propagate(id, newTask.startDate, newTask.dueDate);
+      }
+    });
+
+    if (compositeActions.length > 1) {
+      pushHistory({ type: 'COMPOSITE', actions: compositeActions, timestamp: Date.now() });
+    } else {
+      pushHistory(compositeActions[0]);
+    }
   };
 
   const toggleComplete = async (task: TaskNode) => {

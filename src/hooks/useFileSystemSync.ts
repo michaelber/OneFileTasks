@@ -166,43 +166,5 @@ export function useFileSystemSync() {
     await set('savedFileHandle', null);
   };
 
-  // Tauri auto-save on close
-  useEffect(() => {
-    if ('__TAURI_INTERNALS__' in window) {
-      let unlisten: (() => void) | undefined;
-      
-      const setup = async () => {
-        try {
-          const { getCurrentWindow } = await import('@tauri-apps/api/window');
-          const appWindow = getCurrentWindow();
-          unlisten = await appWindow.onCloseRequested(async (event) => {
-            if (fileHandle) {
-              // Prevent immediate close to allow saving
-              event.preventDefault();
-              try {
-                const writable = await fileHandle.createWritable();
-                const allTasks = await db.tasks.toArray();
-                await writable.write(JSON.stringify(allTasks, null, 2));
-                await writable.close();
-              } catch (e) {
-                console.error("Failed to save on close", e);
-              }
-              // Close the window after saving
-              appWindow.destroy();
-            }
-          });
-        } catch (e) {
-          console.error("Failed to setup Tauri close handler", e);
-        }
-      };
-      
-      setup();
-      
-      return () => {
-        if (unlisten) unlisten();
-      };
-    }
-  }, [fileHandle]);
-
   return { fileHandle, syncStatus, lastSynced, linkFile, createNewFile, syncToFile, manualExport, manualImport, requestPermissionAndSync, unlinkFile };
 }
