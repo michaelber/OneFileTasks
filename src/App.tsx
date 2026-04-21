@@ -167,6 +167,66 @@ export default function App() {
     }
   }, [allTasks, fileHandle]);
 
+  useEffect(() => {
+    // Only for web, as Tauri handles its own close lifecycle below
+    if ('__TAURI_INTERNALS__' in window) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Tauri auto-save on close logic
+  useEffect(() => {
+    if (!('__TAURI_INTERNALS__' in window)) return;
+
+    let unlisten: (() => void) | undefined;
+    
+    const setup = async () => {
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        const appWindow = getCurrentWindow();
+        unlisten = await appWindow.onCloseRequested(async (event) => {
+          // If no file is linked or no changes, just close normally
+          if (!fileHandle || !hasUnsavedChanges) return;
+
+          // Prevent immediate close to attempt final save
+          event.preventDefault();
+          
+          const forceSync = async () => {
+            try {
+              const writable = await fileHandle.createWritable();
+              const allTasksArray = await db.tasks.toArray();
+              await writable.write(JSON.stringify(allTasksArray, null, 2));
+              await writable.close();
+            } catch (e) {
+              console.error("Critical save failure on close", e);
+            }
+          };
+
+          // Race the save against a 1-second timeout to ensure the app DOES close
+          await Promise.race([
+            forceSync(),
+            new Promise(resolve => setTimeout(resolve, 1000))
+          ]);
+
+          // Final exit command
+          appWindow.destroy();
+        });
+      } catch (e) {
+        console.error("Failed to setup Tauri close handler", e);
+      }
+    };
+    
+    setup();
+    return () => { if (unlisten) unlisten(); };
+  }, [fileHandle, hasUnsavedChanges]);
+
   const {
     fullTree,
     filteredTree,
