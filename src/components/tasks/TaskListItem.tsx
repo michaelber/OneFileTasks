@@ -173,6 +173,11 @@ export function TaskListItem({
             setSelectedTaskId(node.id);
             setSelectedTaskIds(new Set([node.id]));
             setLastSelectedId(node.id);
+          } else if (currentView === 'all') {
+            setCurrentView('next-actions');
+            setSelectedTaskId(node.id);
+            setSelectedTaskIds(new Set([node.id]));
+            setLastSelectedId(node.id);
           }
         }}
         onClick={(e) => {
@@ -236,7 +241,7 @@ export function TaskListItem({
           {canComplete && (
             <div 
               className={cn(
-                "mr-2 cursor-pointer shrink-0 transition-colors",
+                "mr-2 cursor-pointer shrink-0 transition-colors relative flex items-center justify-center w-4 h-4",
                 node.isCompleted ? "text-accent-500" : "text-zinc-300 hover:text-accent-500 dark:text-zinc-600"
               )}
               onClick={(e) => {
@@ -244,7 +249,18 @@ export function TaskListItem({
                 toggleComplete(node);
               }}
             >
-              {node.isCompleted ? <CheckSquare size={16} /> : <Square size={16} />}
+              {node.isCompleted ? <CheckSquare size={16} className="relative z-10" /> : <Square size={16} className="relative z-10" />}
+              {node.recurrence && (
+                <Repeat 
+                  size={10} 
+                  className={cn(
+                    "absolute pointer-events-none z-0",
+                    node.isCompleted 
+                      ? "text-accent-300/40 dark:text-accent-700/40" 
+                      : "text-accent-500/70 dark:text-accent-400/70"
+                  )} 
+                />
+              )}
             </div>
           )}
 
@@ -294,7 +310,6 @@ export function TaskListItem({
             <div className="flex-1 flex items-center min-w-0">
               {node.isFolder && !isContextNode && <Folder size={14} className="mr-1.5 text-yellow-500 dark:text-yellow-400 shrink-0" />}
               {node.isProject && <Briefcase size={14} className="mr-1.5 text-blue-500 dark:text-blue-400 shrink-0" />}
-              {node.recurrence && <Repeat size={12} className="mr-1.5 text-accent-500 shrink-0" />}
               {isContextNode && <Tag size={14} className="mr-1.5 text-purple-500 dark:text-purple-400 shrink-0" />}
               <span 
                 className={cn(

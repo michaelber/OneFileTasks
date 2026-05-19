@@ -43,7 +43,7 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
     if (dueDateRef.current && document.activeElement !== dueDateRef.current) {
       dueDateRef.current.value = selectedTask.dueDate ? format(selectedTask.dueDate, 'yyyy-MM-dd') : '';
     }
-  }, [selectedTask.id, selectedTask.startDate, selectedTask.dueDate]);
+  }, [selectedTask.id, selectedTask.startDate, selectedTask.dueDate, propertiesCollapsed]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartXRef.current = e.touches[0].clientX;

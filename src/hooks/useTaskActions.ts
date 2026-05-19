@@ -44,11 +44,20 @@ export function useTaskActions({
   setDraggedId
 }: UseTaskActionsProps) {
 
-  const addTask = async (parentId: string | null = null, insertAfterId: string | null = null) => {
+  const addTask = async (parentId: string | null = null, insertAfterId: string | null = null, insertAsFirstChild: boolean = false) => {
     let newOrder = allTasks.filter(t => t.parentId === parentId).length;
     let actualParentId = parentId;
 
-    if (insertAfterId) {
+    if (insertAsFirstChild && parentId) {
+      newOrder = 0;
+      const tasksToUpdate = allTasks
+        .filter(t => t.parentId === parentId && t.order >= 0)
+        .map(t => ({ ...t, order: t.order + 1 }));
+      
+      if (tasksToUpdate.length > 0) {
+        await db.tasks.bulkPut(tasksToUpdate);
+      }
+    } else if (insertAfterId) {
       const afterTask = allTasks.find(t => t.id === insertAfterId);
       if (afterTask) {
         actualParentId = afterTask.parentId;

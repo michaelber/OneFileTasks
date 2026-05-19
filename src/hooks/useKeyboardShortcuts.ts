@@ -8,7 +8,7 @@ interface UseKeyboardShortcutsProps {
   expandedIds: Set<string>;
   selectedTaskIds: Set<string>;
   currentView: ViewType;
-  addTask: (parentId: string | null, insertAfterId: string | null) => void;
+  addTask: (parentId: string | null, insertAfterId: string | null, insertAsFirstChild?: boolean) => void;
   toggleComplete: (task: TaskNode) => void;
   setQuickAddModalOpen: (open: boolean) => void;
   requestDelete: (id: string) => void;
@@ -44,10 +44,16 @@ export function useKeyboardShortcuts({
 
       if (e.key === 'Insert') {
         e.preventDefault();
-        if (currentView !== 'next-actions' && selectedTaskId) {
-          addTask(null, selectedTaskId);
+        if (e.shiftKey) {
+          if (selectedTaskId && !selectedTaskId.startsWith('context-')) {
+            addTask(selectedTaskId, null, true);
+          }
         } else {
-          addTask(null, null);
+          if (currentView !== 'next-actions' && selectedTaskId) {
+            addTask(null, selectedTaskId);
+          } else {
+            addTask(null, null);
+          }
         }
       } else if (e.key === ' ') {
         if (target.tagName === 'BUTTON' || target.tagName === 'SELECT') return;
