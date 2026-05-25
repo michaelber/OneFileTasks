@@ -21,7 +21,8 @@ export function useFileSystemSync() {
             }
           }
           if (permission === 'granted') {
-            await loadFromFile(handle);
+            // Use latest Dexie state already in db, do not restore/load from file
+            setSyncStatus('synced');
           } else {
             setSyncStatus('needs_permission');
           }
@@ -38,7 +39,8 @@ export function useFileSystemSync() {
     try {
       const permission = await (fileHandle as any).requestPermission({ mode: 'readwrite' });
       if (permission === 'granted') {
-        await loadFromFile(fileHandle);
+        // Do not overwrite Dexie with linked file's old contents on permission granted; keep latest local database state
+        setSyncStatus('synced');
       } else {
         setSyncStatus('error');
       }
